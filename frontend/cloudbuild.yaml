@@ -1,0 +1,56 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+# 1) Obtener la URL pública del backend en Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      BACKEND_URL=$(gcloud run services describe backend-service \
+        --region=${_REGION} \
+        --format='value(status.url)')
+      echo "Backend URL: $BACKEND_URL"
+      sed -i "s|__BACKEND_API_URL__|${BACKEND_URL}/api|g" src/environments/environment.prod.ts
+  dir: 'frontend'
+
+# 2) Build imagen desde Dockerfile del frontend
+- name: 'gcr.io/cloud-builders/docker'
+  dir: 'frontend'
+  args: [
+    'build',
+    '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/frontend:${SHORT_SHA}',
+    '.'
+  ]
+
+# 3) Push imagen a Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'push',
+    '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/frontend:${SHORT_SHA}'
+  ]
+
+# 4) Deploy a Cloud Run
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - run
+    - deploy
+    - ${_CLOUD_RUN_SERVICE}
+    - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/frontend:${SHORT_SHA}
+    - --region=${_REGION}
+    - --platform=managed
+    - --service-account=${_CLOUD_RUN_SA}
+    - --allow-unauthenticated
+
+substitutions:
+  _REGION: "us-central1"
+  _REPO_NAME: "app-repo"
+  _CLOUD_RUN_SERVICE: "frontend-service"
+  _CLOUD_RUN_SA: "cloud-run-runtime@${PROJECT_ID}.iam.gserviceaccount.com"
+
+images:
+  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/frontend:${SHORT_SHA}'
+
+timeout: '1200s'
