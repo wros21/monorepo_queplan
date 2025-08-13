@@ -1,26 +1,16 @@
 options:
-  logging: CLOUD_LOGGING_ONLY   
-
-serviceAccount: "projects/queplan-468417/serviceAccounts/416665410997@cloudbuild.gserviceaccount.com"
+  logging: CLOUD_LOGGING_ONLY
 
 steps:
-  # 1) Instalar y ejecutar Terraform
   - name: hashicorp/terraform:1.5.7
     entrypoint: sh
-    secretEnv: ["_DB_PASSWORD"]   
     args:
       - -c
       - |
         echo "=== Iniciando Terraform ==="
         terraform init
         terraform apply -auto-approve \
-          -var="project_id=queplan-468417" \
-          -var="db_password=$(_DB_PASSWORD)"
+          -var-file="terraform.tfvars"
         echo "=== Terraform finalizado ==="
-
-availableSecrets:
-  secretManager:
-    - versionName: projects/queplan-468417/secrets/db-password/versions/latest
-      env: "_DB_PASSWORD"
 
 timeout: 1200s
