@@ -1,6 +1,8 @@
 options:
   logging: CLOUD_LOGGING_ONLY   
 
+serviceAccount: "projects/queplan-468417/serviceAccounts/416665410997@cloudbuild.gserviceaccount.com"
+
 steps:
   # 1) Instalar y ejecutar Terraform
   - name: hashicorp/terraform:1.5.7
