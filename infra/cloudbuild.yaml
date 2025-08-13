@@ -1,19 +1,21 @@
 options:
-  logging: CLOUD_LOGGING_ONLY
+  logging: CLOUD_LOGGING_ONLY   
 
 steps:
-# 1) Instalar y ejecutar Terraform
-- name: hashicorp/terraform:1.5.7
-  entrypoint: sh
-  args:
-    - -c
-    - |
-      terraform init
-      terraform apply -auto-approve \
-        -var="project_id=queplan-468417" \
-        -var="db_password=${_DB_PASSWORD}"
+  # 1) Instalar y ejecutar Terraform
+  - name: hashicorp/terraform:1.5.7
+    entrypoint: sh
+    secretEnv: ["_DB_PASSWORD"]   
+    args:
+      - -c
+      - |
+        echo "=== Iniciando Terraform ==="
+        terraform init
+        terraform apply -auto-approve \
+          -var="project_id=queplan-468417" \
+          -var="db_password=$(_DB_PASSWORD)"
+        echo "=== Terraform finalizado ==="
 
-# 2) Pasar variable de DB desde Secret Manager
 availableSecrets:
   secretManager:
     - versionName: projects/queplan-468417/secrets/db-password/versions/latest
