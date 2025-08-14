@@ -20,7 +20,7 @@ resource "google_secret_manager_secret" "database_url" {
 
 resource "google_secret_manager_secret_version" "database_url" {
   secret = google_secret_manager_secret.database_url.id
-  secret_data = "postgresql://${var.db_user}:${var.db_password}@${google_sql_database_instance.postgres.private_ip_address}:5432/${var.db_name}"
+  secret_data = "postgresql://${urlencode(var.db_user)}:${urlencode(var.db_password)}@${google_sql_database_instance.postgres.private_ip_address}:5432/${var.db_name}?sslmode=require"
   
   depends_on = [
     google_sql_database_instance.postgres
