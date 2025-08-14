@@ -27,6 +27,15 @@ resource "google_vpc_access_connector" "connector" {
 }
 
 # -----------------------
+# Service Account para Backend
+# -----------------------
+resource "google_service_account" "backend_sa" {
+  account_id   = "backend-sa"
+  display_name = "Cloud Run Backend Service Account"
+  project      = var.project_id
+}
+
+# -----------------------
 # Secret Manager (DB password)
 # -----------------------
 resource "google_secret_manager_secret" "db_password_secret" {
@@ -44,7 +53,7 @@ resource "google_secret_manager_secret_version" "db_password_secret_version" {
 resource "google_secret_manager_secret_iam_member" "backend_secret_access" {
   secret_id = google_secret_manager_secret.db_password_secret.id
   role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${var.backend_service_account}"
+  member    = "serviceAccount:${google_service_account.backend_sa.email}"
 }
 
 # -----------------------
@@ -73,12 +82,25 @@ resource "google_alloydb_instance" "db_instance" {
 }
 
 # -----------------------
+# IAM para invocar backend
+# -----------------------
+resource "google_project_iam_member" "backend_sa_run" {
+  project = var.project_id
+  role    = "roles/run.invoker"
+  member  = "serviceAccount:${google_service_account.backend_sa.email}"
+}
+
+# -----------------------
 # Outputs
 # -----------------------
 output "alloydb_ip" {
-  value = google_alloydb_instance.db_instance.ip_address
+  value = google_alloydb_instance.db_instance.ip_address[0]
 }
 
 output "alloydb_password_secret_name" {
   value = google_secret_manager_secret.db_password_secret.name
+}
+
+output "backend_sa_email" {
+  value = google_service_account.backend_sa.email
 }
