@@ -38,7 +38,7 @@ steps:
           --image=us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest \
           --service-account=backend-sa@queplan-468417.iam.gserviceaccount.com \
           --set-secrets=DB_PASSWORD=db-password:latest \
-          --set-env-vars=DB_HOST=$DB_HOST,DB_PORT=5432,DB_USER=postgres,DB_NAME=postgres \
+          --set-env-vars=DB_HOST=${_DB_HOST},DB_PORT=5432,DB_USER=postgres,DB_NAME=postgres \
           --vpc-connector=cr-connector \
           --vpc-egress=all-traffic \
           --ingress=internal-and-cloud-load-balancing \
