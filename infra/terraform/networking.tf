@@ -5,7 +5,7 @@ resource "google_compute_network" "vpc" {
   depends_on              = [google_project_service.apis]
 }
 
-# Private subnet for AlloyDB and backend
+# Private subnet for Cloud SQL and backend
 resource "google_compute_subnetwork" "private_subnet" {
   name          = "queplan-private-subnet"
   ip_cidr_range = "10.0.1.0/24"
@@ -23,7 +23,7 @@ resource "google_compute_subnetwork" "public_subnet" {
   network       = google_compute_network.vpc.id
 }
 
-# Private service connection for AlloyDB
+# Private service connection for Cloud SQL
 resource "google_compute_global_address" "private_ip_alloc" {
   name          = "queplan-private-ip-alloc"
   purpose       = "VPC_PEERING"
