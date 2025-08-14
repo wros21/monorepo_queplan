@@ -114,3 +114,5 @@ Después del despliegue, GCP proporcionará URLs públicas para cada servicio.
 Puedes integrar el backend desde el frontend usando estas URLs en las variables de entorno o configuración del cliente.
 
 El repositorio se despliega con Cloud Build al hacer un pull request de la branch develop a Main.
+
+Presentacion del proyecto!!
