@@ -12,7 +12,7 @@ resource "google_cloud_run_v2_service" "backend" {
     }
     
     containers {
-      image = "gcr.io/${var.project_id}/queplan-backend:latest"
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/queplan-repo/backend:latest"
       
       ports {
         container_port = 8080
@@ -29,13 +29,33 @@ resource "google_cloud_run_v2_service" "backend" {
       }
       
       env {
+        name = "DB_HOST"
+        value = google_sql_database_instance.postgres.private_ip_address
+      }
+      
+      env {
+        name = "DB_USER"
+        value = var.db_user
+      }
+      
+      env {
+        name = "DB_NAME"
+        value = var.db_name
+      }
+      
+      env {
+        name = "DB_PORT"
+        value = "5432"
+      }
+      
+      env {
         name  = "PORT"
         value = "8080"
       }
       
       env {
-        name  = "ENVIRONMENT"
-        value = var.environment
+        name  = "NODE_ENV"
+        value = "production"
       }
       
       resources {
@@ -54,7 +74,8 @@ resource "google_cloud_run_v2_service" "backend" {
   
   depends_on = [
     google_project_service.apis,
-    google_vpc_access_connector.connector
+    google_vpc_access_connector.connector,
+    google_secret_manager_secret_version.database_url
   ]
 }
 
@@ -67,7 +88,7 @@ resource "google_cloud_run_v2_service" "frontend" {
     service_account = google_service_account.frontend_sa.email
     
     containers {
-      image = "gcr.io/${var.project_id}/queplan-frontend:latest"
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/queplan-repo/frontend:latest"
       
       ports {
         container_port = 3000
@@ -97,10 +118,12 @@ resource "google_cloud_run_v2_service" "frontend" {
     }
   }
   
-  depends_on = [google_project_service.apis]
+  depends_on = [
+    google_project_service.apis,
+    google_cloud_run_v2_service.backend
+  ]
 }
 
-# IAM policy for backend (private access only)
 resource "google_cloud_run_service_iam_member" "backend_invoker" {
   service  = google_cloud_run_v2_service.backend.name
   location = google_cloud_run_v2_service.backend.location
@@ -108,7 +131,7 @@ resource "google_cloud_run_service_iam_member" "backend_invoker" {
   member   = "serviceAccount:${google_service_account.frontend_sa.email}"
 }
 
-# IAM policy for frontend (public access)
+# Frontend público
 resource "google_cloud_run_service_iam_member" "frontend_public" {
   service  = google_cloud_run_v2_service.frontend.name
   location = google_cloud_run_v2_service.frontend.location
