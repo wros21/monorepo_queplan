@@ -6,18 +6,38 @@ require("dotenv").config()
 const app = express()
 const port = process.env.PORT || 3000
 
-// Configuración de la base de datos
-const pool = new Pool({
-  user: process.env.DB_USER || "psqladm",
-  host: process.env.DB_HOST || "localhost",
-  database: process.env.DB_NAME || "retoqueplan",
-  password: process.env.DB_PASSWORD || "vbv6kax0ktc",
-  port: process.env.DB_PORT || 5432,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
-})
+const getDatabaseConfig = () => {
+  // Si existe DATABASE_URL, úsala (formato: postgresql://user:password@host:port/database)
+  if (process.env.DATABASE_URL) {
+    return {
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+    }
+  }
 
-// Middleware
-app.use(cors())
+  // Fallback a variables individuales
+  return {
+    user: process.env.DB_USER || "postgres",
+    host: process.env.DB_HOST || "localhost",
+    database: process.env.DB_NAME || "retoqueplan",
+    password: process.env.DB_PASSWORD || "Vbv6kax0ktc!queplan-468417:us-central1:retoqueplan",
+    port: process.env.DB_PORT || 5432,
+    ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+  }
+}
+
+const pool = new Pool(getDatabaseConfig())
+
+app.use(
+  cors({
+    origin: [
+      "https://queplan-frontend-416665410997.us-central1.run.app",
+      "http://localhost:4200", // Para desarrollo local
+    ],
+    credentials: true,
+  }),
+)
+
 app.use(express.json())
 
 app.get("/health", (req, res) => {

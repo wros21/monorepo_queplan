@@ -32,7 +32,7 @@ steps:
     - --vpc-connector=${_VPC_CONNECTOR}
     - --vpc-egress=private-ranges-only
     - --set-env-vars=DB_USER=psqladm,DB_NAME=retoqueplan,DB_PORT=5432,NODE_ENV=production
-    - --set-secrets=DATABASE_URL=database-url:latest,DB_PASSWORD=db-credentials:latest
+    - --set-secrets=DATABASE_URL=database_url:latest,DB_PASSWORD=db-credentials:latest
     - --allow-unauthenticated
     - --port=3000
 
