@@ -118,3 +118,4 @@ Puedes integrar el backend desde el frontend usando estas URLs en las variables 
 
 El repositorio se despliega con Cloud Build al hacer un pull request de la branch develop a Main.
 
+
