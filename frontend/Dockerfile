@@ -27,7 +27,7 @@ RUN rm -rf /usr/share/nginx/html/*
 # Copy built Angular app from Stage 1
 COPY --from=build /app/dist/notes-app /usr/share/nginx/html
 
-# Expose port 80
-EXPOSE 80
+# Expose port 8080
+EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]
