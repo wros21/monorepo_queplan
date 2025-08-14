@@ -2,17 +2,19 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-# 1) Obtener la URL pública del backend en Cloud Run
+# 1) Obtener la URL del backend desde Cloud Run
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: bash
   args:
     - -c
     - |
-      BACKEND_URL=$(gcloud run services describe backend-service \
+      BACKEND_URL=$(gcloud run services describe queplan-backend \
         --region=${_REGION} \
         --format='value(status.url)')
       echo "Backend URL: $BACKEND_URL"
-      sed -i "s|__BACKEND_API_URL__|${BACKEND_URL}/api|g" src/environments/environment.prod.ts
+      if [ -f "src/environments/environment.prod.ts" ]; then
+        sed -i "s|__BACKEND_API_URL__|${BACKEND_URL}/api|g" src/environments/environment.prod.ts
+      fi
   dir: 'frontend'
 
 # 2) Build imagen desde Dockerfile del frontend
@@ -20,6 +22,7 @@ steps:
   dir: 'frontend'
   args: [
     'build',
+    '--build-arg', 'API_URL=${BACKEND_URL}/api',
     '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/frontend:${SHORT_SHA}',
     '.'
   ]
@@ -43,12 +46,14 @@ steps:
     - --platform=managed
     - --service-account=${_CLOUD_RUN_SA}
     - --allow-unauthenticated
+    - --port=8080
+    - --set-env-vars=BACKEND_URL=${BACKEND_URL}
 
 substitutions:
   _REGION: "us-central1"
-  _REPO_NAME: "app-repo"
-  _CLOUD_RUN_SERVICE: "frontend-service"
-  _CLOUD_RUN_SA: "cloud-run-runtime@${PROJECT_ID}.iam.gserviceaccount.com"
+  _REPO_NAME: "queplan-repo"
+  _CLOUD_RUN_SERVICE: "queplan-frontend"
+  _CLOUD_RUN_SA: "queplan-frontend-sa@${PROJECT_ID}.iam.gserviceaccount.com"
 
 images:
   - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/frontend:${SHORT_SHA}'
