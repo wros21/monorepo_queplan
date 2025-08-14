@@ -8,9 +8,14 @@ output "backend_url" {
   value       = google_cloud_run_v2_service.backend.uri
 }
 
-output "alloydb_cluster_name" {
-  description = "AlloyDB cluster name"
-  value       = google_alloydb_cluster.primary.name
+output "cloudsql_instance_name" {
+  description = "CloudSQL instance name"
+  value       = google_sql_database_instance.postgres.name
+}
+
+output "cloudsql_private_ip" {
+  description = "CloudSQL private IP address"
+  value       = google_sql_database_instance.postgres.private_ip_address
 }
 
 output "vpc_connector_name" {

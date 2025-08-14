@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'API_URL_PLACEHOLDER'
-};
+  apiUrl: process.env.NEXT_PUBLIC_API_URL || "API_URL_PLACEHOLDER",
+}
