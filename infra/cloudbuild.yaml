@@ -2,7 +2,7 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  # 1️⃣ Terraform - Infraestructura
+  # 1️ Terraform
   - name: hashicorp/terraform:1.5.7
     entrypoint: sh
     args:
@@ -10,53 +10,56 @@ steps:
       - |
         echo "=== Iniciando Terraform ==="
         terraform init
-        terraform apply -auto-approve \
-          -var-file="terraform.tfvars"
+        terraform apply -auto-approve -var-file="terraform.tfvars"
         echo "=== Terraform finalizado ==="
 
-  # 2️⃣ Construir imagen Backend
+  # 2️ Backend - Build
   - name: gcr.io/cloud-builders/docker
-    dir: ../backend
-    args:
-      [
-        "build", 
-        "-t", "us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest", 
-        "."
-      ]
-
-  # 3️⃣ Subir imagen Backend a Artifact Registry
-  - name: gcr.io/cloud-builders/docker
-    args: ["push", "us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest"]
-
-  # 4️⃣ Desplegar Backend en Cloud Run
-  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: gcloud
-    args:
-      [
-        "run", "deploy", "backend",
-        "--image=us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest",
-        "--service-account=backend-sa@queplan-468417.iam.gserviceaccount.com",
-        "--set-secrets=DB_PASSWORD=db-password:latest",
-        "--region=us-central1",
-        "--allow-unauthenticated"
-      ]
-
-  # 5️⃣ Construir imagen Frontend con API_URL del backend
-  - name: gcr.io/cloud-builders/docker
-    dir: ../frontend
+    dir: backend
     args:
       [
         "build",
-        "--build-arg", "API_URL=$(gcloud run services describe backend --region=us-central1 --format='value(status.url)')/api",
+        "-t", "us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest",
+        "."
+      ]
+
+  # 3️ Backend - Push
+  - name: gcr.io/cloud-builders/docker
+    args: ["push", "us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest"]
+
+  # 4️ Backend - Deploy (privado con VPC)
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        DB_HOST=$(terraform -chdir=infra output -raw alloydb_ip)
+        gcloud run deploy backend \
+          --image=us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest \
+          --service-account=backend-sa@queplan-468417.iam.gserviceaccount.com \
+          --set-secrets=DB_PASSWORD=db-password:latest \
+          --set-env-vars=DB_HOST=$DB_HOST,DB_PORT=5432,DB_USER=postgres,DB_NAME=postgres \
+          --vpc-connector=cr-connector \
+          --vpc-egress=all-traffic \
+          --ingress=internal-and-cloud-load-balancing \
+          --region=us-central1
+
+  # 5️ Frontend - Build con API_URL=/api
+  - name: gcr.io/cloud-builders/docker
+    dir: frontend
+    args:
+      [
+        "build",
+        "--build-arg", "API_URL=/api",
         "-t", "us-central1-docker.pkg.dev/queplan-468417/frontend/frontend:latest",
         "."
       ]
 
-  # 6️⃣ Subir imagen Frontend a Artifact Registry
+  # 6️ Frontend - Push
   - name: gcr.io/cloud-builders/docker
     args: ["push", "us-central1-docker.pkg.dev/queplan-468417/frontend/frontend:latest"]
 
-  # 7️⃣ Desplegar Frontend en Cloud Run
+  # 7️ Frontend - Deploy (público)
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
