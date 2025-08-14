@@ -30,15 +30,15 @@ Cloud Logging	Monitoreo de logs
 🚀 Pasos para la Implementación
 1. Clonar el repositorio
 
-git clone https://github.com/usuario/proyecto.git
+git clone https://github.com/wros21/monorepo_queplan.git
 cd proyecto
 
 2. Crear el proyecto en GCP
 
-gcloud projects create NOMBRE_DEL_PROYECTO
-gcloud config set project NOMBRE_DEL_PROYECTO
+gcloud projects create queplan
+gcloud config set project queplan
 
-3. Activar APIs necesarias
+3. Activar APIs necesarias - Conectar a Cloud shell y ejecutar
 
 gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com
 
@@ -72,11 +72,11 @@ RUN npm install
 EXPOSE 8080
 CMD ["node", "server.js"]
 
-🧱 Construir y Subir Imágenes
+🧱 Construir y Subir Imágenes - Desde Cloud Shell
 
-gcloud builds submit --tag us-central1-docker.pkg.dev/NOMBRE_DEL_PROYECTO/docker-repo/frontend ./frontend
+gcloud builds submit --tag us-central1-docker.pkg.dev/queplan/docker-repo/frontend ./frontend
 
-gcloud builds submit --tag us-central1-docker.pkg.dev/NOMBRE_DEL_PROYECTO/docker-repo/backend ./backend
+gcloud builds submit --tag us-central1-docker.pkg.dev/queplan/docker-repo/backend ./backend
 
 ☁️ Desplegar en Cloud Run
 Frontend (público)
@@ -100,7 +100,7 @@ gcloud run deploy backend-service \
 Para configurar variables en Cloud Run:
 
 gcloud run deploy backend-service \
-  --set-env-vars NODE_ENV=production,API_KEY=clave123
+  --set-env-vars NODE_ENV=production,API_KEY="clave123"
 
 Para secretos, usar Secret Manager y luego referenciarlos.
 🌐 Acceso a las Aplicaciones
@@ -112,3 +112,5 @@ Después del despliegue, GCP proporcionará URLs públicas para cada servicio.
     Backend: https://backend-service-xxxx.a.run.app
 
 Puedes integrar el backend desde el frontend usando estas URLs en las variables de entorno o configuración del cliente.
+
+El repositorio se despliega con Cloud Build al hacer un pull request de la branch develop a Main.
