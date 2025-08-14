@@ -30,7 +30,7 @@ Cloud Logging	Monitoreo de logs
 🚀 Pasos para la Implementación
 1. Clonar el repositorio
 
-git clone https://github.com/usuario/proyecto.git
+git clone https://github.com/wros21/proyecto.git
 cd proyecto
 
 2. Crear el proyecto en GCP
