@@ -30,12 +30,17 @@ resource "google_cloud_run_v2_service" "backend" {
       
       env {
         name = "DB_HOST"
-        value = google_sql_database_instance.postgres.private_ip_address
+        value = "34.63.169.53"
       }
       
       env {
         name = "DB_USER"
         value = var.db_user
+      }
+      
+      env {
+        name = "DB_PASSWORD"
+        value = var.db_password
       }
       
       env {
