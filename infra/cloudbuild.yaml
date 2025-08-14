@@ -2,7 +2,7 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  # 1️⃣ Terraform - Infraestructura
+  # 1️⃣ Terraform
   - name: hashicorp/terraform:1.5.7
     entrypoint: sh
     args:
@@ -14,9 +14,9 @@ steps:
           -var-file="terraform.tfvars"
         echo "=== Terraform finalizado ==="
 
-  # 2️⃣ Construir imagen Backend
+  # 2️⃣ Backend - Build
   - name: gcr.io/cloud-builders/docker
-    dir: ../backend
+    dir: backend
     args:
       [
         "build", 
@@ -24,11 +24,11 @@ steps:
         "."
       ]
 
-  # 3️⃣ Subir imagen Backend a Artifact Registry
+  # 3️⃣ Backend - Push
   - name: gcr.io/cloud-builders/docker
     args: ["push", "us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest"]
 
-  # 4️⃣ Desplegar Backend en Cloud Run
+  # 4️⃣ Backend - Deploy
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
@@ -41,9 +41,9 @@ steps:
         "--allow-unauthenticated"
       ]
 
-  # 5️⃣ Construir imagen Frontend con API_URL del backend
+  # 5️⃣ Frontend - Build con API_URL del backend
   - name: gcr.io/cloud-builders/docker
-    dir: ../frontend
+    dir: frontend
     args:
       [
         "build",
@@ -52,11 +52,11 @@ steps:
         "."
       ]
 
-  # 6️⃣ Subir imagen Frontend a Artifact Registry
+  # 6️⃣ Frontend - Push
   - name: gcr.io/cloud-builders/docker
     args: ["push", "us-central1-docker.pkg.dev/queplan-468417/frontend/frontend:latest"]
 
-  # 7️⃣ Desplegar Frontend en Cloud Run
+  # 7️⃣ Frontend - Deploy
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
