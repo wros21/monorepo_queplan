@@ -10,8 +10,7 @@ steps:
       - |
         echo "=== Iniciando Terraform ==="
         terraform init
-        terraform apply -auto-approve \
-          -var-file="terraform.tfvars"
+        terraform apply -auto-approve -var-file="terraform.tfvars"
         echo "=== Terraform finalizado ==="
 
   # 2️ Backend - Build
@@ -19,8 +18,8 @@ steps:
     dir: backend
     args:
       [
-        "build", 
-        "-t", "us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest", 
+        "build",
+        "-t", "us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest",
         "."
       ]
 
@@ -28,26 +27,30 @@ steps:
   - name: gcr.io/cloud-builders/docker
     args: ["push", "us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest"]
 
-  # 4️ Backend - Deploy
+  # 4️ Backend - Deploy (privado con VPC)
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      [
-        "run", "deploy", "backend",
-        "--image=us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest",
-        "--service-account=backend-sa@queplan-468417.iam.gserviceaccount.com",
-        "--set-secrets=DB_PASSWORD=db-password:latest",
-        "--region=us-central1",
-        "--allow-unauthenticated"
-      ]
+      - -c
+      - |
+        DB_HOST=$(terraform -chdir=infra output -raw alloydb_ip)
+        gcloud run deploy backend \
+          --image=us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest \
+          --service-account=backend-sa@queplan-468417.iam.gserviceaccount.com \
+          --set-secrets=DB_PASSWORD=db-password:latest \
+          --set-env-vars=DB_HOST=$DB_HOST,DB_PORT=5432,DB_USER=postgres,DB_NAME=postgres \
+          --vpc-connector=cr-connector \
+          --vpc-egress=all-traffic \
+          --ingress=internal-and-cloud-load-balancing \
+          --region=us-central1
 
-  # 5️ Frontend - Build con API_URL del backend
+  # 5️ Frontend - Build con API_URL=/api
   - name: gcr.io/cloud-builders/docker
     dir: frontend
     args:
       [
         "build",
-        "--build-arg", "API_URL=$(gcloud run services describe backend --region=us-central1 --format='value(status.url)')/api",
+        "--build-arg", "API_URL=/api",
         "-t", "us-central1-docker.pkg.dev/queplan-468417/frontend/frontend:latest",
         "."
       ]
@@ -56,7 +59,7 @@ steps:
   - name: gcr.io/cloud-builders/docker
     args: ["push", "us-central1-docker.pkg.dev/queplan-468417/frontend/frontend:latest"]
 
-  # 7️ Frontend - Deploy
+  # 7️ Frontend - Deploy (público)
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
