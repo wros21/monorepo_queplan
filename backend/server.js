@@ -7,7 +7,7 @@ const app = express()
 const port = process.env.PORT || 3000
 
 const getDatabaseConfig = () => {
-  // Si existe DATABASE_URL, úsala (formato: postgresql://user:password@host:port/database)
+  
   if (process.env.DATABASE_URL) {
     return {
       connectionString: process.env.DATABASE_URL,
@@ -18,7 +18,7 @@ const getDatabaseConfig = () => {
   // Fallback a variables individuales
   return {
     user: process.env.DB_USER || "postgres",
-    host: process.env.DB_HOST || "localhost",
+    host: process.env.DB_HOST || "queplan-468417:us-central1:retoqueplan",
     database: process.env.DB_NAME || "retoqueplan",
     password: process.env.DB_PASSWORD || "Vbv6kax0ktc!",
     port: process.env.DB_PORT || 5432,
