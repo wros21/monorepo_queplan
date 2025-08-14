@@ -1,86 +1,78 @@
+steps:
+  # Build Backend
+  - name: 'gcr.io/cloud-builders/docker'
+    args: 
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/queplan-backend:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/queplan-backend:latest'
+      - './backend'
+    id: 'build-backend'
+
+  # Build Frontend
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/queplan-frontend:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/queplan-frontend:latest'
+      - './frontend'
+    id: 'build-frontend'
+
+  # Push Backend Image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/queplan-backend:$COMMIT_SHA'
+    id: 'push-backend'
+    waitFor: ['build-backend']
+
+  # Push Frontend Image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/queplan-frontend:$COMMIT_SHA'
+    id: 'push-frontend'
+    waitFor: ['build-frontend']
+
+  # Deploy Backend
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'queplan-backend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/queplan-backend:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--no-allow-unauthenticated'
+    id: 'deploy-backend'
+    waitFor: ['push-backend']
+
+  # Deploy Frontend
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'queplan-frontend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/queplan-frontend:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+    id: 'deploy-frontend'
+    waitFor: ['push-frontend']
+
 options:
   logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
 
-steps:
-  # 1️⃣ Terraform
-  - name: hashicorp/terraform:1.5.7
-    entrypoint: sh
-    args:
-      - -c
-      - |
-        echo "=== Iniciando Terraform ==="
-        terraform init
-        terraform apply -auto-approve -var-file="terraform.tfvars"
-        echo "=== Terraform finalizado ==="
-
-  # Esperar por el conector VPC
-  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        echo "Esperando a que el conector VPC esté listo..."
-        for i in {1..10}; do
-          gcloud compute networks vpc-access connectors describe cr-connector --region=us-central1 --project=queplan-468417 && break
-          echo "Aún no listo, reintentando en 15s..."
-          sleep 15
-        done
-
-  # 2️⃣ Backend - Build
-  - name: gcr.io/cloud-builders/docker
-    dir: backend
-    args:
-      [
-        "build",
-        "-t", "us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest",
-        "."
-      ]
-
-  # 3️⃣ Backend - Push
-  - name: gcr.io/cloud-builders/docker
-    args: ["push", "us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest"]
-
-  # 4️⃣ Backend - Deploy (privado con VPC)
-  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        DB_HOST=$(terraform -chdir=infra output -raw alloydb_ip)
-        gcloud run deploy backend \
-          --image=us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest \
-          --service-account=backend-sa@queplan-468417.iam.gserviceaccount.com \
-          --set-secrets=DB_PASSWORD=db-password:latest \
-          --set-env-vars=DB_HOST=${_DB_HOST},DB_PORT=5432,DB_USER=postgres,DB_NAME=postgres \
-          --vpc-connector=cr-connector \
-          --vpc-egress=all-traffic \
-          --ingress=internal-and-cloud-load-balancing \
-          --region=us-central1
-
-  # 5️⃣ Frontend - Build con API_URL=/api
-  - name: gcr.io/cloud-builders/docker
-    dir: frontend
-    args:
-      [
-        "build",
-        "--build-arg", "API_URL=/api",
-        "-t", "us-central1-docker.pkg.dev/queplan-468417/frontend/frontend:latest",
-        "."
-      ]
-
-  # 6️⃣ Frontend - Push
-  - name: gcr.io/cloud-builders/docker
-    args: ["push", "us-central1-docker.pkg.dev/queplan-468417/frontend/frontend:latest"]
-
-  # 7️⃣ Frontend - Deploy (público)
-  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: gcloud
-    args:
-      [
-        "run", "deploy", "frontend",
-        "--image=us-central1-docker.pkg.dev/queplan-468417/frontend/frontend:latest",
-        "--region=us-central1",
-        "--allow-unauthenticated"
-      ]
-
-timeout: 1800s
+timeout: '1200s'
