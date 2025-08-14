@@ -18,7 +18,7 @@ const getDatabaseConfig = () => {
   // Fallback a variables individuales
   return {
     user: process.env.DB_USER || "postgres",
-    host: process.env.DB_HOST || "queplan-468417:us-central1:retoqueplan",
+    host: process.env.DB_HOST || "/cloudsql/queplan-468417:us-central1:retoqueplan",
     database: process.env.DB_NAME || "retoqueplan",
     password: process.env.DB_PASSWORD || "Vbv6kax0ktc!",
     port: process.env.DB_PORT || 5432,
@@ -181,7 +181,7 @@ app.delete("/api/notes/:id", async (req, res) => {
 const startServer = async () => {
   await initDB()
   app.listen(port, () => {
-    console.log(`Servidor corriendo en http://localhost:${port}`)
+    console.log(`Servidor corriendo en http://${process.env.DB_HOST}:${port}`)
   })
 }
 
