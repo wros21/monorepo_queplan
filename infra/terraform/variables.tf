@@ -36,7 +36,14 @@ variable "db_name" {
 variable "db_user" {
   description = "Database user"
   type        = string
-  default     = "psqladm"
+  default     = "postgres"
+}
+
+variable "db_password" {
+  description = "Database password"
+  type        = string
+  default     = "Vbv6kax0ktc!"
+  sensitive   = true
 }
 
 variable "environment" {
