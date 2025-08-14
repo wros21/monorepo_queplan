@@ -28,9 +28,9 @@ resource "google_secret_manager_secret_iam_member" "backend_secret_access" {
   member    = "serviceAccount:${google_service_account.backend_sa.email}"
 }
 
-resource "google_project_iam_member" "backend_alloydb_client" {
+resource "google_project_iam_member" "backend_cloudsql_client" {
   project = var.project_id
-  role    = "roles/alloydb.client"
+  role    = "roles/cloudsql.client"
   member  = "serviceAccount:${google_service_account.backend_sa.email}"
 }
 
@@ -40,7 +40,8 @@ resource "google_project_iam_member" "cloudbuild_roles" {
     "roles/run.admin",
     "roles/iam.serviceAccountUser",
     "roles/storage.admin",
-    "roles/secretmanager.secretAccessor"
+    "roles/secretmanager.secretAccessor",
+    "roles/artifactregistry.admin" // Agregado para Artifact Registry
   ])
   
   project = var.project_id

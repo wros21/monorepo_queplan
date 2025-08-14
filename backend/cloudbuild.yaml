@@ -18,7 +18,7 @@ steps:
     '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/backend:${SHORT_SHA}'
   ]
 
-# 3) Deploy a Cloud Run (egress privado hacia VPC para AlloyDB)
+# 3) Deploy a Cloud Run con configuración actualizada
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: gcloud
   args:
@@ -31,15 +31,17 @@ steps:
     - --service-account=${_CLOUD_RUN_SA}
     - --vpc-connector=${_VPC_CONNECTOR}
     - --vpc-egress=private-ranges-only
-    - --set-secrets=DB_CONFIG=db-credentials:latest
+    - --set-env-vars=DB_USER=psqladm,DB_NAME=retoqueplan,DB_PORT=5432,NODE_ENV=production
+    - --set-secrets=DATABASE_URL=database-url:latest,DB_PASSWORD=db-credentials:latest
     - --allow-unauthenticated
+    - --port=3000
 
 substitutions:
   _REGION: "us-central1"
   _REPO_NAME: "app-repo"
   _CLOUD_RUN_SERVICE: "backend-service"
-  _CLOUD_RUN_SA: "cloud-run-runtime@${PROJECT_ID}.iam.gserviceaccount.com"
-  _VPC_CONNECTOR: "projects/${PROJECT_ID}/locations/us-central1/connectors/serverless-conn"
+  _CLOUD_RUN_SA: "queplan-backend-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+  _VPC_CONNECTOR: "projects/${PROJECT_ID}/locations/us-central1/connectors/queplan-vpc-connector"
 
 images:
   - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO_NAME}/backend:${SHORT_SHA}'

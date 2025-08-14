@@ -29,10 +29,10 @@ resource "google_project_service" "apis" {
     "run.googleapis.com",
     "cloudbuild.googleapis.com",
     "secretmanager.googleapis.com",
-    "alloydb.googleapis.com",
+    "sqladmin.googleapis.com", 
     "vpcaccess.googleapis.com",
     "servicenetworking.googleapis.com",
-    "containerregistry.googleapis.com"
+    "artifactregistry.googleapis.com" 
   ])
   
   service = each.value

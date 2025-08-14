@@ -37,9 +37,9 @@ resource "google_sql_database" "database" {
   instance = google_sql_database_instance.postgres.name
 }
 
-# Database User
+# Database User with correct password
 resource "google_sql_user" "user" {
   name     = var.db_user
   instance = google_sql_database_instance.postgres.name
-  password = data.google_secret_manager_secret_version.db_password.secret_data
+  password = "vbv6kax0ktc" // Usando la contraseña proporcionada directamente
 }
