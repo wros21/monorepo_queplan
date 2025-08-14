@@ -2,7 +2,7 @@ options:
   logging: CLOUD_LOGGING_ONLY
 
 steps:
-  # 1️ Terraform
+  # 1️⃣ Terraform
   - name: hashicorp/terraform:1.5.7
     entrypoint: sh
     args:
@@ -13,7 +13,20 @@ steps:
         terraform apply -auto-approve -var-file="terraform.tfvars"
         echo "=== Terraform finalizado ==="
 
-  # 2️ Backend - Build
+  # Esperar por el conector VPC
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        echo "Esperando a que el conector VPC esté listo..."
+        for i in {1..10}; do
+          gcloud compute networks vpc-access connectors describe cr-connector --region=us-central1 --project=queplan-468417 && break
+          echo "Aún no listo, reintentando en 15s..."
+          sleep 15
+        done
+
+  # 2️⃣ Backend - Build
   - name: gcr.io/cloud-builders/docker
     dir: backend
     args:
@@ -23,11 +36,11 @@ steps:
         "."
       ]
 
-  # 3️ Backend - Push
+  # 3️⃣ Backend - Push
   - name: gcr.io/cloud-builders/docker
     args: ["push", "us-central1-docker.pkg.dev/queplan-468417/backend/backend:latest"]
 
-  # 4️ Backend - Deploy (privado con VPC)
+  # 4️⃣ Backend - Deploy (privado con VPC)
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: bash
     args:
@@ -44,7 +57,7 @@ steps:
           --ingress=internal-and-cloud-load-balancing \
           --region=us-central1
 
-  # 5️ Frontend - Build con API_URL=/api
+  # 5️⃣ Frontend - Build con API_URL=/api
   - name: gcr.io/cloud-builders/docker
     dir: frontend
     args:
@@ -55,11 +68,11 @@ steps:
         "."
       ]
 
-  # 6️ Frontend - Push
+  # 6️⃣ Frontend - Push
   - name: gcr.io/cloud-builders/docker
     args: ["push", "us-central1-docker.pkg.dev/queplan-468417/frontend/frontend:latest"]
 
-  # 7️ Frontend - Deploy (público)
+  # 7️⃣ Frontend - Deploy (público)
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
     args:
