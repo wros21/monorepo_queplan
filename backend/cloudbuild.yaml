@@ -38,8 +38,8 @@ steps:
 
 substitutions:
   _REGION: "us-central1"
-  _REPO_NAME: "app-repo"
-  _CLOUD_RUN_SERVICE: "backend-service"
+  _REPO_NAME: "queplan-repo"
+  _CLOUD_RUN_SERVICE: "queplan-backend"
   _CLOUD_RUN_SA: "queplan-backend-sa@${PROJECT_ID}.iam.gserviceaccount.com"
   _VPC_CONNECTOR: "projects/${PROJECT_ID}/locations/us-central1/connectors/queplan-vpc-connector"
 

@@ -14,52 +14,15 @@ resource "google_cloudbuild_trigger" "backend_trigger" {
   description = "Trigger para construir y desplegar el backend"
 
   github {
-    owner = "tu-usuario-github"  # Cambiar por tu usuario
-    name  = "tu-repositorio"     # Cambiar por tu repositorio
+    owner = var.github_owner
+    name  = var.github_repo
     push {
       branch = "^main$"
     }
   }
 
   included_files = ["backend/**"]
-
-  build {
-    step {
-      name = "gcr.io/cloud-builders/docker"
-      args = [
-        "build",
-        "-t", "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/backend:$COMMIT_SHA",
-        "-t", "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/backend:latest",
-        "./backend"
-      ]
-    }
-
-    step {
-      name = "gcr.io/cloud-builders/docker"
-      args = [
-        "push",
-        "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/backend:$COMMIT_SHA"
-      ]
-    }
-
-    step {
-      name = "gcr.io/cloud-builders/docker"
-      args = [
-        "push",
-        "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/backend:latest"
-      ]
-    }
-
-    step {
-      name = "gcr.io/cloud-builders/gcloud"
-      args = [
-        "run", "deploy", "${var.project_id}-backend",
-        "--image", "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/backend:$COMMIT_SHA",
-        "--region", var.region,
-        "--platform", "managed"
-      ]
-    }
-  }
+  filename       = "backend/cloudbuild.yaml"
 
   depends_on = [google_project_service.apis]
 }
@@ -70,52 +33,15 @@ resource "google_cloudbuild_trigger" "frontend_trigger" {
   description = "Trigger para construir y desplegar el frontend"
 
   github {
-    owner = "tu-usuario-github"  # Cambiar por tu usuario
-    name  = "tu-repositorio"     # Cambiar por tu repositorio
+    owner = var.github_owner
+    name  = var.github_repo
     push {
       branch = "^main$"
     }
   }
 
   included_files = ["frontend/**"]
-
-  build {
-    step {
-      name = "gcr.io/cloud-builders/docker"
-      args = [
-        "build",
-        "-t", "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:$COMMIT_SHA",
-        "-t", "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:latest",
-        "./frontend"
-      ]
-    }
-
-    step {
-      name = "gcr.io/cloud-builders/docker"
-      args = [
-        "push",
-        "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:$COMMIT_SHA"
-      ]
-    }
-
-    step {
-      name = "gcr.io/cloud-builders/docker"
-      args = [
-        "push",
-        "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:latest"
-      ]
-    }
-
-    step {
-      name = "gcr.io/cloud-builders/gcloud"
-      args = [
-        "run", "deploy", "${var.project_id}-frontend",
-        "--image", "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:$COMMIT_SHA",
-        "--region", var.region,
-        "--platform", "managed"
-      ]
-    }
-  }
+  filename       = "frontend/cloudbuild.yaml"
 
   depends_on = [google_project_service.apis]
 }
