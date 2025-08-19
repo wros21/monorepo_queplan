@@ -22,19 +22,23 @@ provider "google-beta" {
   region  = var.region
 }
 
-# Enable required APIs
+# Activar APIs necesarias
 resource "google_project_service" "apis" {
   for_each = toset([
     "compute.googleapis.com",
     "run.googleapis.com",
     "cloudbuild.googleapis.com",
+    "clouddeploy.googleapis.com",
+    "containerregistry.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "alloydb.googleapis.com",
     "secretmanager.googleapis.com",
-    "sqladmin.googleapis.com", 
-    "vpcaccess.googleapis.com",
     "servicenetworking.googleapis.com",
-    "artifactregistry.googleapis.com" 
+    "vpcaccess.googleapis.com"
   ])
-  
+
   service = each.value
-  disable_on_destroy = false
+  project = var.project_id
+
+  disable_dependent_services = true
 }
