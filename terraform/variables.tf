@@ -52,3 +52,15 @@ variable "frontend_image" {
   type        = string
   default     = "gcr.io/queplan/frontend:latest"
 }
+
+variable "github_owner" {
+  description = "Propietario del repositorio GitHub"
+  type        = string
+  default     = "tu-usuario-github"  # Cambiar por tu usuario
+}
+
+variable "github_repo" {
+  description = "Nombre del repositorio GitHub"
+  type        = string
+  default     = "tu-repositorio"     # Cambiar por tu repositorio
+}
