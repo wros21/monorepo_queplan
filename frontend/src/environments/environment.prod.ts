@@ -1,6 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: window.location.hostname.includes("localhost")
-    ? "http://localhost:3000/api"
-    : `https://${window.location.hostname.replace("frontend", "backend")}/api`,
-}
+  backendUrl: 'https://backend-589676295208.us-central1.run.app/api'
+};

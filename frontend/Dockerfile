@@ -9,23 +9,28 @@ RUN npm install
 
 COPY . .
 
+# Reemplaza la URL del backend si se pasa API_URL
 RUN if [ -n "$API_URL" ]; then \
       sed -i "s|__BACKEND_API_URL__|${API_URL}|g" src/environments/environment.prod.ts; \
     fi
 
-# Build the Angular app
+# Build la app Angular
 RUN npm run build
 
 # Stage 2: Serve using Nginx
-FROM nginx:latest
+FROM nginx:stable-alpine
 
-# Remove default nginx website
+# Limpiar default html
 RUN rm -rf /usr/share/nginx/html/*
 
-# Copy built Angular app from Stage 1
+# Copiar la app construida
 COPY --from=build /app/dist/notes-app /usr/share/nginx/html
 
-COPY nginx.conf /etc/nginx/nginx.conf
+# Crear nginx.conf dinámico usando la variable PORT
+ENV PORT 80
+RUN echo "events {}\nhttp {\n  server {\n    listen ${PORT};\n    location / {\n      root /usr/share/nginx/html;\n      index index.html index.htm;\n      try_files \$uri /index.html;\n    }\n  }\n}" > /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
+
+# CMD para Cloud Run
 CMD ["nginx", "-g", "daemon off;"]
