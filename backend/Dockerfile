@@ -1,20 +1,18 @@
 # Use an official Node.js LTS version as base
 FROM node:lts-alpine
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json first for better caching
 COPY package*.json ./
 
-# Install only production dependencies
 RUN npm install --only=production
 
-# Copy the rest of the application code
 COPY . .
 
-# Expose the port your app runs on
+# No es necesario cambiar EXPOSE, Cloud Run ignora este puerto, pero lo dejamos para documentación
 EXPOSE 3000
 
-# Start the application
+# Usar la variable PORT que Cloud Run define
+ENV PORT 3000
+
 CMD ["node", "server.js"]
