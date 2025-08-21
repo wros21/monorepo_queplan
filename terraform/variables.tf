@@ -1,7 +1,7 @@
 variable "project_id" {
   description = "ID del proyecto de GCP"
   type        = string
-  default     = "queplan"
+  default     = "queplan-469422"
 }
 
 variable "region" {
@@ -25,7 +25,7 @@ variable "environment" {
 variable "db_name" {
   description = "Nombre de la base de datos"
   type        = string
-  default     = "retoqueplan"
+  default     = "retoqueplan1"
 }
 
 variable "db_user" {
@@ -56,11 +56,11 @@ variable "frontend_image" {
 variable "github_owner" {
   description = "Propietario del repositorio GitHub"
   type        = string
-  default     = "tu-usuario-github"  # Cambiar por tu usuario
+  default     = "wros21"  
 }
 
 variable "github_repo" {
   description = "Nombre del repositorio GitHub"
   type        = string
-  default     = "tu-repositorio"     # Cambiar por tu repositorio
+  default     = "https://github.com/wros21/monorepo_queplan"     
 }
